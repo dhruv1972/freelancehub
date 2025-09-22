@@ -1,3 +1,4 @@
+// Mongoose schema for Proposal (week 2)
 import { Schema, model, InferSchemaType, Types } from 'mongoose';
 
 const ProposalSchema = new Schema(

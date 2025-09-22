@@ -1,3 +1,4 @@
+// Mongoose schema for User (week 2)
 import { Schema, model, InferSchemaType } from 'mongoose';
 
 const ProfileSchema = new Schema({

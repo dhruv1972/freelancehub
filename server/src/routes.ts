@@ -1,3 +1,4 @@
+// All HTTP API routes used in Week 2/3 milestones
 import { Router } from 'express';
 import { User } from './models/User';
 import { Project } from './models/Project';
@@ -18,6 +19,7 @@ export const api = Router();
 const upload = multer({ dest: path.join(process.cwd(), 'uploads') });
 
 // Profile upsert
+// Upserts the current user's profile (uses x-user-email header as a simple auth stub for dev)
 api.post('/profile', async (req, res) => {
     try {
         const email = getUserEmail(req);
@@ -36,6 +38,7 @@ api.post('/profile', async (req, res) => {
 });
 
 // Get my profile
+// Returns the current user's profile using x-user-email header
 api.get('/profile/me', async (req, res) => {
     try {
         const email = getUserEmail(req);
@@ -48,6 +51,7 @@ api.get('/profile/me', async (req, res) => {
 });
 
 // Create project (client)
+// Client creates a new project; requires x-user-email of a client account
 api.post('/projects', async (req, res) => {
     try {
         const email = getUserEmail(req);
@@ -63,6 +67,7 @@ api.post('/projects', async (req, res) => {
 });
 
 // List/search projects (open)
+// Supports q (text) and category filters
 api.get('/projects', async (req, res) => {
     try {
         const { q, category } = req.query as { q?: string; category?: string };
@@ -87,7 +92,7 @@ api.get('/projects/:id', async (req, res) => {
     }
 });
 
-// Proposal accept/reject and update project status
+// Proposal accept -> also set project to in-progress and store selected freelancer
 api.post('/proposals/:id/accept', async (req, res) => {
     try {
         const proposal = await Proposal.findByIdAndUpdate(
@@ -117,7 +122,7 @@ api.post('/proposals/:id/reject', async (req, res) => {
     }
 });
 
-// Messaging: send
+// Messaging: send a message
 api.post('/messages', async (req, res) => {
     try {
         const email = getUserEmail(req);
@@ -131,7 +136,7 @@ api.post('/messages', async (req, res) => {
     }
 });
 
-// Messaging: list between two users (optional project)
+// Messaging: list messages between me and withUserId (optional project scope)
 api.get('/messages', async (req, res) => {
     try {
         const { withUserId, projectId } = req.query as { withUserId?: string; projectId?: string };
@@ -153,7 +158,7 @@ api.get('/messages', async (req, res) => {
     }
 });
 
-// File upload (returns file path) and attach in messages
+// File upload (dev-only local storage). Returns a relative path you can attach to a message.
 api.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });

@@ -1,3 +1,4 @@
+// Mongoose schema for Project (week 2)
 import { Schema, model, InferSchemaType, Types } from 'mongoose';
 
 const ProjectSchema = new Schema(

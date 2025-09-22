@@ -1,3 +1,5 @@
+// Express entry point
+// Loads environment variables, connects to MongoDB, mounts API routes, and starts the server.
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -22,6 +24,7 @@ app.use('/api', api);
 
 connectToDatabase(MONGODB_URI)
     .then(() => {
+        // Simple startup log for development visibility
         app.listen(PORT, () => {
             console.log(`API listening on port ${PORT}`);
         });

@@ -1,3 +1,4 @@
+// Minimal starter UI to prove client boot and show how to call the API later
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'

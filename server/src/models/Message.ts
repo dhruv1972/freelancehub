@@ -1,3 +1,4 @@
+// Mongoose schema for Message (week 3)
 import { Schema, model, Types, InferSchemaType } from 'mongoose';
 
 const MessageSchema = new Schema(
