@@ -3,6 +3,11 @@ FreelanceHub
 Overview
 FreelanceHub is a freelance service marketplace connecting clients with freelancers. This repo contains a React client (already set up on your machine) and an Express + TypeScript API in `server/`.
 
+What this is (student project)
+- Built incrementally by weeks (see timeline below)
+- Focused on clarity over complexity; simple patterns and readable code
+- Uses a dev-only header (`x-user-email`) to simulate auth during early weeks
+
 Project Timeline (7 weeks, 30h/week)
 - Week 1: Project setup, auth foundation, health endpoint, docs
 - Week 2: Profiles, project posting, search, basic proposals
@@ -20,7 +25,7 @@ Local Development
    - Health check: http://localhost:4000/health
 
 2) Client (Vite React)
-   - Use your existing client app
+   - Use the client app under `/client`
    - Set `VITE_API_BASE_URL=http://localhost:4000` in client `.env.local`
    - Start client dev server
 
@@ -58,8 +63,18 @@ Capstone/
 
 API Quick Start
 - GET /health → Returns `{ status: 'ok', uptime }`
+ - POST /api/profile (header `x-user-email`) → upsert profile
+ - POST /api/projects (header `x-user-email` as client) → create project
+ - GET /api/projects → list/search projects
+ - POST /api/projects/:id/proposals (header `x-user-email` as freelancer) → submit proposal
+ - POST /api/proposals/:id/accept → accept proposal
+ - POST /api/messages (header `x-user-email`) → send message
 
 Docs
 - See `docs/` for wireframes, data flows (with error handling), and database schema.
+
+Notes
+- Do not commit `.env` files or `server/uploads/` (see `.gitignore`).
+- When moving to real auth, replace `x-user-email` with proper JWT-based headers.
 
 
