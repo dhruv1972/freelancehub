@@ -1,11 +1,14 @@
-// All HTTP API routes used in Week 2/3 milestones
+// All HTTP API routes used in Week 2/3/4 milestones
 import { Router } from 'express';
 import { User } from './models/User';
 import { Project } from './models/Project';
 import { Proposal } from './models/Proposal';
 import { Message } from './models/Message';
+import { TimeEntry } from './models/TimeEntry';
+import { Review } from './models/Review';
 import multer from 'multer';
 import path from 'path';
+import Stripe from 'stripe';
 
 // temporary auth stub: read x-user-email header
 function getUserEmail(req: any): string | null {
@@ -190,6 +193,165 @@ api.get('/projects/:id/proposals', async (req, res) => {
     try {
         const proposals = await Proposal.find({ projectId: req.params.id }).sort({ createdAt: -1 });
         res.json(proposals);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Week 4 routes: Time tracking, Reviews, Payments, Admin
+
+// Initialize Stripe with secret key (only if provided)
+const stripe = process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    : null;
+
+// Time tracking: Start timer
+api.post('/time/start', async (req, res) => {
+    try {
+        const email = getUserEmail(req);
+        if (!email) return res.status(401).json({ error: 'Missing x-user-email' });
+        const freelancer = await User.findOne({ email });
+        if (!freelancer) return res.status(400).json({ error: 'User not found' });
+
+        const { projectId, description } = req.body;
+        const timeEntry = await TimeEntry.create({
+            freelancerId: freelancer._id,
+            projectId,
+            startTime: new Date(),
+            description,
+        });
+        res.status(201).json(timeEntry);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Time tracking: Stop timer
+api.post('/time/stop', async (req, res) => {
+    try {
+        const email = getUserEmail(req);
+        if (!email) return res.status(401).json({ error: 'Missing x-user-email' });
+        const freelancer = await User.findOne({ email });
+        if (!freelancer) return res.status(400).json({ error: 'User not found' });
+
+        const { timeEntryId } = req.body;
+        const timeEntry = await TimeEntry.findOneAndUpdate(
+            { _id: timeEntryId, freelancerId: freelancer._id, endTime: null },
+            { endTime: new Date() },
+            { new: true }
+        );
+        if (!timeEntry) return res.status(404).json({ error: 'Active time entry not found' });
+        res.json(timeEntry);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Time tracking: Get time entries for a project
+api.get('/time', async (req, res) => {
+    try {
+        const { projectId } = req.query as { projectId?: string };
+        const email = getUserEmail(req);
+        if (!email) return res.status(401).json({ error: 'Missing x-user-email' });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ error: 'User not found' });
+
+        const filter: any = { freelancerId: user._id };
+        if (projectId) filter.projectId = projectId;
+        const timeEntries = await TimeEntry.find(filter).sort({ createdAt: -1 });
+        res.json(timeEntries);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Reviews: Create a review
+api.post('/reviews', async (req, res) => {
+    try {
+        const email = getUserEmail(req);
+        if (!email) return res.status(401).json({ error: 'Missing x-user-email' });
+        const reviewer = await User.findOne({ email });
+        if (!reviewer) return res.status(400).json({ error: 'User not found' });
+
+        const { projectId, revieweeId, rating, comment, reviewType } = req.body;
+        const review = await Review.create({
+            projectId,
+            reviewerId: reviewer._id,
+            revieweeId,
+            rating,
+            comment,
+            reviewType,
+        });
+        res.status(201).json(review);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Reviews: Get reviews for a project or user
+api.get('/reviews', async (req, res) => {
+    try {
+        const { projectId, userId } = req.query as { projectId?: string; userId?: string };
+        const filter: any = {};
+        if (projectId) filter.projectId = projectId;
+        if (userId) filter.revieweeId = userId;
+        const reviews = await Review.find(filter).sort({ createdAt: -1 });
+        res.json(reviews);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Payments: Create payment intent (Stripe test mode)
+api.post('/payments/intent', async (req, res) => {
+    try {
+        if (!stripe) {
+            return res.status(503).json({ error: 'Stripe not configured (missing STRIPE_SECRET_KEY)' });
+        }
+
+        const { amount, currency = 'usd', description } = req.body;
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100), // Convert to cents
+            currency,
+            description,
+            automatic_payment_methods: { enabled: true },
+        });
+        res.json({ client_secret: paymentIntent.client_secret });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Get all users
+api.get('/admin/users', async (req, res) => {
+    try {
+        const users = await User.find({}).select('-__v').sort({ createdAt: -1 });
+        res.json(users);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Get all projects
+api.get('/admin/projects', async (req, res) => {
+    try {
+        const projects = await Project.find({}).select('-__v').sort({ createdAt: -1 });
+        res.json(projects);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Suspend user
+api.post('/admin/users/:id/suspend', async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { status: 'suspended' },
+            { new: true }
+        );
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json(user);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }

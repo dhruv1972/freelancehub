@@ -63,12 +63,23 @@ Capstone/
 
 API Quick Start
 - GET /health → Returns `{ status: 'ok', uptime }`
- - POST /api/profile (header `x-user-email`) → upsert profile
- - POST /api/projects (header `x-user-email` as client) → create project
- - GET /api/projects → list/search projects
- - POST /api/projects/:id/proposals (header `x-user-email` as freelancer) → submit proposal
- - POST /api/proposals/:id/accept → accept proposal
- - POST /api/messages (header `x-user-email`) → send message
+- POST /api/profile (header `x-user-email`) → upsert profile
+- POST /api/projects (header `x-user-email` as client) → create project
+- GET /api/projects → list/search projects
+- POST /api/projects/:id/proposals (header `x-user-email` as freelancer) → submit proposal
+- POST /api/proposals/:id/accept → accept proposal
+- POST /api/messages (header `x-user-email`) → send message
+
+Week 4 Features (NEW)
+- POST /api/time/start → start timer
+- POST /api/time/stop → stop timer  
+- GET /api/time?projectId=X → get time entries
+- POST /api/reviews → submit review
+- GET /api/reviews?projectId=X → get reviews
+- POST /api/payments/intent → create Stripe payment intent
+- GET /api/admin/users → admin user list
+- GET /api/admin/projects → admin project list
+- POST /api/admin/users/:id/suspend → suspend user
 
 Docs
 - See `docs/` for wireframes, data flows (with error handling), and database schema.
