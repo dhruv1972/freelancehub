@@ -6,6 +6,7 @@ import { Proposal } from './models/Proposal';
 import { Message } from './models/Message';
 import { TimeEntry } from './models/TimeEntry';
 import { Review } from './models/Review';
+import { Notification } from './models/Notification';
 import multer from 'multer';
 import path from 'path';
 import Stripe from 'stripe';
@@ -73,12 +74,92 @@ api.post('/projects', async (req, res) => {
 // Supports q (text) and category filters
 api.get('/projects', async (req, res) => {
     try {
-        const { q, category } = req.query as { q?: string; category?: string };
-        const filter: any = { status: 'open' };
-        if (category) filter.category = category;
-        if (q) filter.$text = { $search: q };
-        const projects = await Project.find(filter).sort({ createdAt: -1 });
-        res.json(projects);
+        const {
+            q,
+            category,
+            minBudget,
+            maxBudget,
+            status,
+            skills,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            page = '1',
+            limit = '20'
+        } = req.query as {
+            q?: string;
+            category?: string;
+            minBudget?: string;
+            maxBudget?: string;
+            status?: string;
+            skills?: string;
+            sortBy?: string;
+            sortOrder?: string;
+            page?: string;
+            limit?: string;
+        };
+
+        const filter: any = {};
+
+        // Default to open projects unless status specified
+        if (status && status !== 'all') {
+            filter.status = status;
+        } else if (!status) {
+            filter.status = 'open';
+        }
+
+        // Text search
+        if (q) {
+            filter.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } },
+                { requirements: { $in: [new RegExp(q, 'i')] } }
+            ];
+        }
+
+        // Category filter
+        if (category && category !== 'all') {
+            filter.category = category;
+        }
+
+        // Budget range filter
+        if (minBudget || maxBudget) {
+            filter.budget = {};
+            if (minBudget) filter.budget.$gte = parseInt(minBudget);
+            if (maxBudget) filter.budget.$lte = parseInt(maxBudget);
+        }
+
+        // Skills filter (search in requirements array)
+        if (skills) {
+            const skillsArray = skills.split(',').map(skill => skill.trim());
+            filter.requirements = { $in: skillsArray.map(skill => new RegExp(skill, 'i')) };
+        }
+
+        // Pagination
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Sorting
+        const sortOptions: any = {};
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+        const projects = await Project.find(filter)
+            .populate('clientId', 'firstName lastName')
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limitNum);
+
+        const total = await Project.countDocuments(filter);
+
+        res.json({
+            projects,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                pages: Math.ceil(total / limitNum)
+            }
+        });
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
@@ -354,6 +435,108 @@ api.post('/admin/users/:id/suspend', async (req, res) => {
         res.json(user);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// ===== WEEK 5: NOTIFICATIONS =====
+
+// Get user notifications
+api.get('/notifications', async (req, res) => {
+    try {
+        const userEmail = getUserEmail(req);
+        if (!userEmail) {
+            return res.status(401).json({ error: 'User email required' });
+        }
+
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const notifications = await Notification.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+});
+
+// Mark notification as read
+api.patch('/notifications/:id/read', async (req, res) => {
+    try {
+        const userEmail = getUserEmail(req);
+        if (!userEmail) {
+            return res.status(401).json({ error: 'User email required' });
+        }
+
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: req.params.id, userId: user._id },
+            { isRead: true },
+            { new: true }
+        );
+
+        if (!notification) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+
+        res.json(notification);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update notification' });
+    }
+});
+
+// Mark all notifications as read
+api.patch('/notifications/read-all', async (req, res) => {
+    try {
+        const userEmail = getUserEmail(req);
+        if (!userEmail) {
+            return res.status(401).json({ error: 'User email required' });
+        }
+
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await Notification.updateMany(
+            { userId: user._id, isRead: false },
+            { isRead: true }
+        );
+
+        res.json({ message: 'All notifications marked as read' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update notifications' });
+    }
+});
+
+// Get unread notification count
+api.get('/notifications/unread-count', async (req, res) => {
+    try {
+        const userEmail = getUserEmail(req);
+        if (!userEmail) {
+            return res.status(401).json({ error: 'User email required' });
+        }
+
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const count = await Notification.countDocuments({
+            userId: user._id,
+            isRead: false
+        });
+
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get notification count' });
     }
 });
 

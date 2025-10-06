@@ -70,7 +70,7 @@ API Quick Start
 - POST /api/proposals/:id/accept → accept proposal
 - POST /api/messages (header `x-user-email`) → send message
 
-Week 4 Features (NEW)
+Week 4 Features
 - POST /api/time/start → start timer
 - POST /api/time/stop → stop timer  
 - GET /api/time?projectId=X → get time entries
@@ -80,6 +80,12 @@ Week 4 Features (NEW)
 - GET /api/admin/users → admin user list
 - GET /api/admin/projects → admin project list
 - POST /api/admin/users/:id/suspend → suspend user
+
+Week 5 Features (NEW)
+- GET /api/notifications → get user notifications
+- PATCH /api/notifications/:id/read → mark notification as read
+- PATCH /api/notifications/read-all → mark all notifications as read
+- GET /api/notifications/unread-count → get unread notification count
 
 Docs
 - See `docs/` for wireframes, data flows (with error handling), and database schema.
