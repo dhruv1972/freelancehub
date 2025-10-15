@@ -2,8 +2,12 @@
 // baseURL comes from VITE_API_BASE_URL so we can switch between dev/prod easily
 import axios from 'axios';
 
+// Force the correct base URL for development
+const baseURL = 'http://localhost:4000/api';
+console.log('Setting API Base URL to:', baseURL);
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
+    baseURL: baseURL,
     headers: { 'Content-Type': 'application/json' },
 });
 

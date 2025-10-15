@@ -5,14 +5,18 @@ import Project from './pages/Project';
 import Admin from './pages/Admin';
 import Notifications from './pages/Notifications';
 import Search from './pages/Search';
+import CreateProject from './pages/CreateProject';
+import AuthModal from './components/AuthModal';
 import axios from 'axios';
 import './App.css';
 
 function App() {
   const [serverStatus, setServerStatus] = useState<string>('checking...');
   const [isLoading, setIsLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  // Check server health on load with better error handling
+  // Check server health and restore user session
   useEffect(() => {
     const checkServer = async () => {
       try {
@@ -25,8 +29,29 @@ function App() {
         setIsLoading(false);
       }
     };
+
+    // Restore user session from localStorage
+    const savedToken = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (savedToken && savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+
     checkServer();
   }, []);
+
+  const handleAuthSuccess = (userData: any, userToken: string) => {
+    setUser(userData);
+    setShowAuthModal(false);
+    console.log('User authenticated:', userData);
+    console.log('Token received:', userToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
 
   if (isLoading) {
     return (
@@ -50,13 +75,43 @@ function App() {
 
             <nav className="main-nav">
               <Link to="/search" className="nav-item">Find Work</Link>
+              {user && user.userType === 'client' && (
+                <Link to="/create-project" className="nav-item">Post Project</Link>
+              )}
               <Link to="/notifications" className="nav-item">Notifications</Link>
               <Link to="/admin" className="nav-item">Dashboard</Link>
             </nav>
 
             <div className="header-actions">
               <span className="server-status">{serverStatus}</span>
-              <button className="btn-primary">Sign Up</button>
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ color: '#333', fontWeight: '500' }}>
+                    Welcome, {user.firstName}!
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="btn-secondary"
+                    style={{
+                      background: 'transparent',
+                      color: '#666',
+                      border: '1px solid #ddd',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="btn-primary"
+                >
+                  Sign Up
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -64,6 +119,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/project/:id" element={<Project />} />
+          <Route path="/create-project" element={<CreateProject />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/search" element={<Search />} />
@@ -99,6 +155,13 @@ function App() {
             <p>&copy; 2024 FreelanceHub. All rights reserved.</p>
           </div>
         </footer>
+
+        {/* Authentication Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
       </div>
     </Router>
   );
@@ -106,6 +169,8 @@ function App() {
 
 // Professional Homepage inspired by Upwork/Fiverr
 const HomePage: React.FC = () => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   return (
     <main className="homepage">
       {/* Hero Section */}
@@ -268,7 +333,25 @@ const HomePage: React.FC = () => {
           <div className="cta-content">
             <h2>Find the talent needed to get your business growing.</h2>
             <div className="cta-buttons">
-              <Link to="/search" className="btn-primary-large">Get Started</Link>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="btn-primary-large"
+                style={{
+                  padding: '1rem 2rem',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  display: 'inline-block',
+                  background: 'white',
+                  color: '#667eea',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Get Started
+              </button>
               <Link to="/project/sample" className="btn-secondary-large">View Demo</Link>
             </div>
           </div>
@@ -300,6 +383,17 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Authentication Modal for Homepage */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={(user, token) => {
+          // This would ideally be handled by a global state management
+          console.log('User authenticated:', user, 'Token:', token);
+          setShowAuthModal(false);
+        }}
+      />
     </main>
   );
 };

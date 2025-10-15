@@ -109,6 +109,12 @@ Week 5 Features (COMPLETED)
 - GET /api/notifications/unread-count → get unread notification count
 - Enhanced /api/projects with advanced filtering (category, budget, skills, pagination)
 
+Authentication System (NEW)
+- POST /api/auth/register → register with email/password
+- POST /api/auth/login → login with email/password
+- POST /api/auth/google → Google OAuth authentication (demo)
+- GET /api/auth/me → get current user profile
+
 User Interface
 - 🎨 **Professional Design**: Upwork/Fiverr-inspired marketplace layout
 - 📱 **Fully Responsive**: Mobile-first design with CSS Grid and Flexbox

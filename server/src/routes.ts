@@ -1,4 +1,4 @@
-// All HTTP API routes used in Week 2/3/4 milestones
+// All HTTP API routes used in Week 2/3/4/5 milestones
 import { Router } from 'express';
 import { User } from './models/User';
 import { Project } from './models/Project';
@@ -7,6 +7,7 @@ import { Message } from './models/Message';
 import { TimeEntry } from './models/TimeEntry';
 import { Review } from './models/Review';
 import { Notification } from './models/Notification';
+import { authRouter } from './routes/auth';
 import multer from 'multer';
 import path from 'path';
 import Stripe from 'stripe';
@@ -18,6 +19,9 @@ function getUserEmail(req: any): string | null {
 }
 
 export const api = Router();
+
+// Mount auth routes
+api.use('/auth', authRouter);
 
 // simple local upload storage (for dev only)
 const upload = multer({ dest: path.join(process.cwd(), 'uploads') });
