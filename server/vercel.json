@@ -3,27 +3,13 @@
     "builds": [
         {
             "src": "src/index.ts",
-            "use": "@vercel/node",
-            "config": {
-                "includeFiles": [
-                    "src/**"
-                ]
-            }
+            "use": "@vercel/node"
         }
     ],
     "routes": [
         {
-            "src": "/api/(.*)",
-            "dest": "src/index.ts"
-        },
-        {
-            "src": "/health",
+            "src": "/(.*)",
             "dest": "src/index.ts"
         }
-    ],
-    "functions": {
-        "src/index.ts": {
-            "maxDuration": 30
-        }
-    }
+    ]
 }
