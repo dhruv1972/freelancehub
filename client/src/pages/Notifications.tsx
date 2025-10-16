@@ -17,7 +17,6 @@ const Notifications: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
     const [error, setError] = useState<string | null>(null);
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         fetchNotifications();
@@ -52,7 +51,6 @@ const Notifications: React.FC = () => {
 
     const markAsRead = async (notificationId: string) => {
         try {
-            setActionLoading(notificationId);
             await api.patch(`/notifications/${notificationId}/read`, {}, {
                 headers: { 'x-user-email': 'test@example.com' }
             });
@@ -69,8 +67,6 @@ const Notifications: React.FC = () => {
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
             setError('Failed to mark notification as read. Please try again.');
-        } finally {
-            setActionLoading(null);
         }
     };
 
