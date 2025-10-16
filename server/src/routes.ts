@@ -286,8 +286,9 @@ api.get('/projects/:id/proposals', async (req, res) => {
 // Week 4 routes: Time tracking, Reviews, Payments, Admin
 
 // Initialize Stripe with secret key (only if provided)
+// Do not pin apiVersion here so it matches the installed SDK/types in deploy environments
 const stripe = process.env.STRIPE_SECRET_KEY
-    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    ? new Stripe(process.env.STRIPE_SECRET_KEY as string)
     : null;
 
 // Time tracking: Start timer
