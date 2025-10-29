@@ -20,7 +20,7 @@ function App() {
   useEffect(() => {
     const checkServer = async () => {
       try {
-        await axios.get('http://localhost:4000/health');
+        await axios.get('https://freelancehub-1-y9d7.onrender.com/health');
         setServerStatus(`✅ Connected`);
       } catch (error) {
         console.error('Server connection failed:', error);

@@ -2,8 +2,8 @@
 // baseURL comes from VITE_API_BASE_URL so we can switch between dev/prod easily
 import axios from 'axios';
 
-// Force the correct base URL for development
-const baseURL = 'http://localhost:4000/api';
+// Use deployed backend URL
+const baseURL = 'https://freelancehub-1-y9d7.onrender.com/api';
 console.log('Setting API Base URL to:', baseURL);
 
 export const api = axios.create({
