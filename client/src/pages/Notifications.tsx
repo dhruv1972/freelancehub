@@ -16,7 +16,7 @@ const Notifications: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [error, setError] = useState<string | null>(null);
+    // Removed explicit error banner; use gentle empty state instead
 
     useEffect(() => {
         fetchNotifications();
@@ -25,7 +25,6 @@ const Notifications: React.FC = () => {
 
     const fetchNotifications = async () => {
         try {
-            setError(null);
             const response = await api.get('/notifications', {
                 headers: { 'x-user-email': 'test@example.com' }
             });
@@ -33,7 +32,6 @@ const Notifications: React.FC = () => {
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
             // Silent fallback: no blocking error banner
-            setError(null);
         } finally {
             setLoading(false);
         }
@@ -67,7 +65,6 @@ const Notifications: React.FC = () => {
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (error) {
             console.error('Failed to mark notification as read:', error);
-            setError('Failed to mark notification as read. Please try again.');
         }
     };
 
