@@ -32,7 +32,8 @@ const Notifications: React.FC = () => {
             setNotifications(response.data);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
-            setError('Failed to load notifications. Please try again.');
+            // Silent fallback: no blocking error banner
+            setError(null);
         } finally {
             setLoading(false);
         }
@@ -133,32 +134,17 @@ const Notifications: React.FC = () => {
             maxWidth: '800px',
             margin: '0 auto'
         }}>
-            {/* Error Message */}
-            {error && (
+            {/* Gentle info state instead of error */}
+            {!loading && notifications.length === 0 && (
                 <div style={{
-                    color: '#dc3545',
-                    backgroundColor: '#f8d7da',
-                    border: '1px solid #f5c6cb',
-                    padding: '1rem',
-                    borderRadius: '4px',
-                    marginBottom: '2rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    color: '#555',
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #eee',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '6px',
+                    marginBottom: '1rem'
                 }}>
-                    <span>{error}</span>
-                    <button
-                        onClick={() => setError(null)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#dc3545',
-                            cursor: 'pointer',
-                            fontSize: '1.2rem'
-                        }}
-                    >
-                        ×
-                    </button>
+                    No notifications found.
                 </div>
             )}
 
