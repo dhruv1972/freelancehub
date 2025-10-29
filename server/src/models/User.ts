@@ -19,6 +19,7 @@ const UserSchema = new Schema(
         userType: { type: String, enum: ['freelancer', 'client', 'admin'], required: true },
         isVerified: { type: Boolean, default: false },
         isActive: { type: Boolean, default: true },
+        status: { type: String, enum: ['active', 'suspended'], default: 'active' },
         profile: { type: ProfileSchema, default: {} },
     },
     { timestamps: true }

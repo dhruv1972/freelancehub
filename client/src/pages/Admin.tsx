@@ -44,16 +44,41 @@ const Admin: React.FC = () => {
         }
     }, [hasUserAccess]);
 
+    // Subtle auto-refresh when page is active (like professional websites)
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const interval = setInterval(() => {
+            // Only refresh if page is visible and user is logged in
+            if (!document.hidden) {
+                loadProjects();
+                if (hasUserAccess) {
+                    loadUsers();
+                }
+            }
+        }, 30000); // Every 30 seconds when page is active
+
+        return () => clearInterval(interval);
+    }, [hasUserAccess, currentUser]);
+
     const loadUsers = async () => {
+        if (!currentUser) return; // Don't load if not logged in
+
         try {
             const response = await api.get('/admin/users');
-            setUsers(response.data);
+            console.log('Loaded users:', response.data);
+            // Hide suspended users from the list
+            const activeUsers = (response.data || []).filter((u: any) => u.status !== 'suspended');
+            console.log('Active users after filter:', activeUsers);
+            setUsers(activeUsers);
         } catch (error) {
             console.error('Error loading users:', error);
         }
     };
 
     const loadProjects = async () => {
+        if (!currentUser) return; // Don't load if not logged in
+
         try {
             const response = await api.get('/admin/projects');
             setProjects(response.data);
@@ -68,12 +93,33 @@ const Admin: React.FC = () => {
         try {
             await api.post(`/admin/users/${userId}/suspend`);
             alert('User suspended successfully');
-            loadUsers(); // Refresh the list
+            // Reload users to reflect the change
+            loadUsers();
         } catch (error) {
             console.error('Error suspending user:', error);
             alert('Failed to suspend user');
         }
     };
+
+    // Show login message if not logged in
+    if (!currentUser) {
+        return (
+            <div className="container">
+                <h1>Admin Dashboard</h1>
+                <div style={{
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    padding: '2rem',
+                    textAlign: 'center',
+                    marginTop: '2rem'
+                }}>
+                    <h3>Please Log In</h3>
+                    <p>You need to be logged in to access the admin dashboard.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container">

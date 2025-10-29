@@ -408,10 +408,10 @@ api.post('/payments/intent', async (req, res) => {
     }
 });
 
-// Admin: Get all users
+// Admin: Get all users (only active users)
 api.get('/admin/users', async (req, res) => {
     try {
-        const users = await User.find({}).select('-__v').sort({ createdAt: -1 });
+        const users = await User.find({ status: 'active' }).select('-__v').sort({ createdAt: -1 });
         res.json(users);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
