@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 // Use deployed backend URL
-const baseURL = 'https://freelancehub-1-y9d7.onrender.com/api';
+const baseURL = 'http://localhost:4000/api';
 console.log('Setting API Base URL to:', baseURL);
 
 export const api = axios.create({
