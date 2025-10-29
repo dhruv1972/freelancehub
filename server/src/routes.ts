@@ -408,10 +408,17 @@ api.post('/payments/intent', async (req, res) => {
     }
 });
 
-// Admin: Get all users (only active users)
+// Admin: Get all users (active or legacy users without status)
 api.get('/admin/users', async (req, res) => {
     try {
-        const users = await User.find({ status: 'active' }).select('-__v').sort({ createdAt: -1 });
+        const users = await User.find({
+            $or: [
+                { status: 'active' },
+                { status: { $exists: false } }
+            ]
+        })
+            .select('-__v')
+            .sort({ createdAt: -1 });
         res.json(users);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -431,6 +438,7 @@ api.get('/admin/projects', async (req, res) => {
 // Admin: Suspend user
 api.post('/admin/users/:id/suspend', async (req, res) => {
     try {
+        console.log('Suspending user:', req.params.id);
         const user = await User.findByIdAndUpdate(
             req.params.id,
             { status: 'suspended' },
