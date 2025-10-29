@@ -24,13 +24,25 @@ interface Project {
 const Admin: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
-    const [activeTab, setActiveTab] = useState<'users' | 'projects'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'projects'>('projects');
+    const [currentUser, setCurrentUser] = useState<any>(null);
+
+    // Check if current user has admin access
+    const hasUserAccess = currentUser?.email === 'chavda.dhruv@gmail.com';
 
     // Load data on mount
     useEffect(() => {
-        loadUsers();
+        // Get current user from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            setCurrentUser(JSON.parse(userStr));
+        }
+
         loadProjects();
-    }, []);
+        if (hasUserAccess) {
+            loadUsers();
+        }
+    }, [hasUserAccess]);
 
     const loadUsers = async () => {
         try {
@@ -66,22 +78,37 @@ const Admin: React.FC = () => {
     return (
         <div className="container">
             <h1>Admin Dashboard</h1>
+            {!hasUserAccess && (
+                <div style={{
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                }}>
+                    <p style={{ margin: 0, color: '#6c757d' }}>
+                        <strong>Note:</strong> You can view projects. User management is restricted to authorized administrators only.
+                    </p>
+                </div>
+            )}
 
             {/* Tab Navigation */}
             <div style={{ marginBottom: '2rem' }}>
-                <button
-                    onClick={() => setActiveTab('users')}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        marginRight: '0.5rem',
-                        backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
-                        color: activeTab === 'users' ? 'white' : 'black',
-                        border: '1px solid #ccc',
-                        cursor: 'pointer',
-                    }}
-                >
-                    Users ({users.length})
-                </button>
+                {hasUserAccess && (
+                    <button
+                        onClick={() => setActiveTab('users')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            marginRight: '0.5rem',
+                            backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
+                            color: activeTab === 'users' ? 'white' : 'black',
+                            border: '1px solid #ccc',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Users ({users.length})
+                    </button>
+                )}
                 <button
                     onClick={() => setActiveTab('projects')}
                     style={{
@@ -96,8 +123,8 @@ const Admin: React.FC = () => {
                 </button>
             </div>
 
-            {/* Users Tab */}
-            {activeTab === 'users' && (
+            {/* Users Tab - Only for specific admin email */}
+            {activeTab === 'users' && hasUserAccess && (
                 <div>
                     <h2>Users Management</h2>
                     {users.length === 0 ? (
@@ -155,6 +182,15 @@ const Admin: React.FC = () => {
                             </tbody>
                         </table>
                     )}
+                </div>
+            )}
+
+            {/* Access denied message for users without admin access */}
+            {activeTab === 'users' && !hasUserAccess && (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                    <h2>Access Restricted</h2>
+                    <p>You don't have permission to view user management.</p>
+                    <p>Only authorized administrators can access this section.</p>
                 </div>
             )}
 
