@@ -5,7 +5,13 @@ import Project from './pages/Project';
 import Admin from './pages/Admin';
 import Notifications from './pages/Notifications';
 import Search from './pages/Search';
+import SearchFreelancers from './pages/SearchFreelancers';
 import CreateProject from './pages/CreateProject';
+import Profile from './pages/Profile';
+import ViewProfile from './pages/ViewProfile';
+import MyProposals from './pages/MyProposals';
+import MyProjects from './pages/MyProjects';
+import Messages from './pages/Messages';
 import AuthModal from './components/AuthModal';
 import axios from 'axios';
 import './App.css';
@@ -15,6 +21,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   // Check server health and restore user session
   useEffect(() => {
@@ -51,7 +58,28 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    setShowUserDropdown(false);
+    // Dispatch event to notify other components (like Admin)
+    window.dispatchEvent(new Event('userLogout'));
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showUserDropdown && !target.closest('.user-dropdown-container')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
 
   if (isLoading) {
     return (
@@ -76,40 +104,206 @@ function App() {
             <nav className="main-nav">
               <Link to="/search" className="nav-item">Find Work</Link>
               {user && user.userType === 'client' && (
-                <Link to="/create-project" className="nav-item">Post Project</Link>
+                <Link to="/search-freelancers" className="nav-item">Find Freelancers</Link>
               )}
-              <Link to="/notifications" className="nav-item">Notifications</Link>
-              <Link to="/admin" className="nav-item">Dashboard</Link>
+              {user && (
+                <>
+                  <Link to="/notifications" className="nav-item">Notifications</Link>
+                  <Link to="/admin" className="nav-item">Dashboard</Link>
+                </>
+              )}
             </nav>
 
             <div className="header-actions">
               <span className="server-status">{serverStatus}</span>
               {user ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{ color: '#333', fontWeight: '500' }}>
-                    Welcome, {user.firstName}!
-                  </span>
+                <div className="user-dropdown-container" style={{ position: 'relative' }}>
                   <button
-                    onClick={handleLogout}
-                    className="btn-secondary"
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
                     style={{
-                      background: 'transparent',
-                      color: '#666',
-                      border: '1px solid #ddd',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
                       padding: '0.5rem 1rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
+                      borderRadius: '8px',
+                      background: '#f8f9fa',
+                      border: '1px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
                     }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f0f9f0';
+                      e.currentTarget.style.borderColor = '#e4e5e7';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!showUserDropdown) {
+                        e.currentTarget.style.background = '#f8f9fa';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      }
+                    }}
+                    className={showUserDropdown ? 'user-dropdown-active' : ''}
                   >
-                    Logout
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      gap: '0.25rem'
+                    }}>
+                      <span style={{
+                        color: '#333',
+                        fontWeight: '600',
+                        fontSize: '0.875rem'
+                      }}>
+                        {user.firstName} {user.lastName}
+                      </span>
+                      <span style={{
+                        color: '#666',
+                        fontSize: '0.75rem',
+                        textTransform: 'capitalize'
+                      }}>
+                        {user.userType}
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #14a800 0%, #108e00 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: '700',
+                      fontSize: '1rem',
+                      boxShadow: '0 2px 4px rgba(20, 168, 0, 0.2)',
+                      flexShrink: 0
+                    }}>
+                      {user.firstName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{
+                        transition: 'transform 0.2s ease',
+                        transform: showUserDropdown ? 'rotate(180deg)' : 'rotate(0deg)'
+                      }}
+                    >
+                      <path
+                        d="M6 9L1 4h10L6 9z"
+                        fill="#666"
+                      />
+                    </svg>
                   </button>
+
+                  {/* Dropdown Menu */}
+                  {showUserDropdown && (
+                    <div className="user-dropdown-menu">
+                      <div className="dropdown-header">
+                        <div style={{ fontWeight: '600', color: '#333', fontSize: '0.9375rem' }}>
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div style={{ color: '#666', fontSize: '0.8125rem', textTransform: 'capitalize', marginTop: '0.25rem' }}>
+                          {user.email}
+                        </div>
+                      </div>
+                      <div className="dropdown-divider"></div>
+                      {user.userType === 'freelancer' && (
+                        <>
+                          <Link
+                            to="/profile"
+                            className="dropdown-item"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <span>👤</span>
+                            <span>My Profile</span>
+                          </Link>
+                          <Link
+                            to="/my-proposals"
+                            className="dropdown-item"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <span>📝</span>
+                            <span>My Proposals</span>
+                          </Link>
+                          <Link
+                            to="/my-projects"
+                            className="dropdown-item"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <span>💼</span>
+                            <span>My Projects</span>
+                          </Link>
+                        </>
+                      )}
+                      {user.userType === 'client' && (
+                        <>
+                          <Link
+                            to="/create-project"
+                            className="dropdown-item"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <span>➕</span>
+                            <span>Post Project</span>
+                          </Link>
+                          <Link
+                            to="/search-freelancers"
+                            className="dropdown-item"
+                            onClick={() => setShowUserDropdown(false)}
+                          >
+                            <span>🔍</span>
+                            <span>Find Freelancers</span>
+                          </Link>
+                        </>
+                      )}
+                      <Link
+                        to="/notifications"
+                        className="dropdown-item"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        <span>🔔</span>
+                        <span>Notifications</span>
+                      </Link>
+                      <Link
+                        to="/messages"
+                        className="dropdown-item"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        <span>💬</span>
+                        <span>Messages</span>
+                      </Link>
+                      <Link
+                        to="/admin"
+                        className="dropdown-item"
+                        onClick={() => setShowUserDropdown(false)}
+                      >
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                      </Link>
+                      <div className="dropdown-divider"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="dropdown-item dropdown-item-danger"
+                      >
+                        <span>🚪</span>
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
                   className="btn-primary"
+                  style={{
+                    padding: '0.625rem 1.5rem',
+                    fontSize: '0.9375rem',
+                    fontWeight: '600'
+                  }}
                 >
-                  Sign Up
+                  Sign In / Sign Up
                 </button>
               )}
             </div>
@@ -120,9 +314,18 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/project/:id" element={<Project />} />
           <Route path="/create-project" element={<CreateProject />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-proposals" element={<MyProposals />} />
+          <Route path="/my-projects" element={<MyProjects />} />
+          <Route path="/freelancer/:id" element={<ViewProfile />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/messages/:userId" element={<Messages />} />
+          <Route path="/messages/project/:projectId" element={<Messages />} />
+          <Route path="/messages/project/:projectId/user/:userId" element={<Messages />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/search-freelancers" element={<SearchFreelancers />} />
         </Routes>
 
         {/* Footer */}

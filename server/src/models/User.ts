@@ -5,7 +5,8 @@ const ProfileSchema = new Schema({
     bio: { type: String },
     skills: { type: [String], default: [] },
     experience: { type: String },
-    portfolio: { type: [String], default: [] },
+    portfolio: { type: [String], default: [] }, // Can contain URLs or file paths
+    resume: { type: String }, // Resume file path
     rating: { type: Number, default: 0 },
     location: { type: String },
 });

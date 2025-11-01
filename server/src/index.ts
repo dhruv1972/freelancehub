@@ -1,12 +1,28 @@
 // Express entry point
-// Loads environment variables, connects to MongoDB, mounts API routes, and starts the server.
+// Loads environment variables FIRST before any other imports that might use them
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from .env file (MUST be first, before any other imports)
+// Look for .env in the server directory (parent of src directory)
+dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+// Now import other modules that might use environment variables
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectToDatabase } from './db';
 import { api } from './routes';
 
-dotenv.config();
+// Debug: Log if Stripe key is loaded (without showing the key)
+console.log('Environment check:');
+console.log('- STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
+console.log('- STRIPE_SECRET_KEY length:', process.env.STRIPE_SECRET_KEY?.length || 0);
+if (process.env.STRIPE_SECRET_KEY) {
+    console.log('✅ Stripe secret key is configured');
+} else {
+    console.log('⚠️  Stripe secret key is NOT configured (STRIPE_SECRET_KEY missing)');
+    console.log('   Make sure STRIPE_SECRET_KEY is in server/.env file');
+}
 
 const app = express();
 app.use(cors());
@@ -33,5 +49,4 @@ connectToDatabase(MONGODB_URI)
         console.error('Failed to connect to MongoDB:', err.message);
         process.exit(1);
     });
-
 

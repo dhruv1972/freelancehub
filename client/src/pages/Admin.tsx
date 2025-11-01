@@ -30,19 +30,60 @@ const Admin: React.FC = () => {
     // Check if current user has admin access
     const hasUserAccess = currentUser?.email === 'chavda.dhruv@gmail.com';
 
-    // Load data on mount
+    // Load data on mount and listen for logout
     useEffect(() => {
-        // Get current user from localStorage
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            setCurrentUser(JSON.parse(userStr));
-        }
+        const updateUser = () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    setCurrentUser(JSON.parse(userStr));
+                } catch (e) {
+                    setCurrentUser(null);
+                }
+            } else {
+                setCurrentUser(null);
+            }
+        };
 
-        loadProjects();
-        if (hasUserAccess) {
-            loadUsers();
+        // Initial load
+        updateUser();
+
+        // Listen for storage changes (when user logs out)
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'user') {
+                updateUser();
+            }
+        };
+
+        // Listen for custom logout event
+        const handleLogout = () => {
+            setCurrentUser(null);
+            setUsers([]);
+            setProjects([]);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('userLogout', handleLogout);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('userLogout', handleLogout);
+        };
+    }, []);
+
+    // Load data when user changes
+    useEffect(() => {
+        if (currentUser) {
+            loadProjects();
+            if (hasUserAccess) {
+                loadUsers();
+            }
+        } else {
+            // Clear data when logged out
+            setUsers([]);
+            setProjects([]);
         }
-    }, [hasUserAccess]);
+    }, [currentUser, hasUserAccess]);
 
     // Subtle auto-refresh when page is active (like professional websites)
     useEffect(() => {
@@ -88,6 +129,12 @@ const Admin: React.FC = () => {
     };
 
     const suspendUser = async (userId: string) => {
+        // Security check: prevent action if user doesn't have access
+        if (!currentUser || !hasUserAccess) {
+            alert('Access denied. You must be logged in as an authorized administrator.');
+            return;
+        }
+
         if (!confirm('Are you sure you want to suspend this user?')) return;
 
         try {
