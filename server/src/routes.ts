@@ -276,6 +276,11 @@ api.get('/projects/my', async (req, res) => {
 // Get project by id
 api.get('/projects/:id', async (req, res) => {
     try {
+        // Prevent "my" from being treated as an ObjectId
+        if (req.params.id === 'my') {
+            return res.status(404).json({ error: 'Use /projects/my endpoint instead' });
+        }
+
         const project = await Project.findById(req.params.id)
             .populate('selectedFreelancer', 'firstName lastName email')
             .populate('clientId', 'firstName lastName email');
