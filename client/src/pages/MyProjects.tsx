@@ -27,8 +27,6 @@ const MyProjects: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
-    const [user, setUser] = useState<any>(null);
-
     useEffect(() => {
         // Check if user is logged in
         const userStr = localStorage.getItem('user');
@@ -39,7 +37,6 @@ const MyProjects: React.FC = () => {
         }
 
         const currentUser = JSON.parse(userStr);
-        setUser(currentUser);
 
         // Only freelancers can view ongoing projects
         if (currentUser.userType !== 'freelancer') {

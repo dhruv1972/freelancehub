@@ -25,8 +25,6 @@ const MyProposals: React.FC = () => {
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
-    const [user, setUser] = useState<any>(null);
-
     useEffect(() => {
         // Check if user is logged in
         const userStr = localStorage.getItem('user');
@@ -37,7 +35,6 @@ const MyProposals: React.FC = () => {
         }
 
         const currentUser = JSON.parse(userStr);
-        setUser(currentUser);
 
         // Only freelancers can view proposals
         if (currentUser.userType !== 'freelancer') {

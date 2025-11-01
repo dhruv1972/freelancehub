@@ -215,7 +215,7 @@ const Messages: React.FC = () => {
         );
     });
 
-    const loadMessages = async (myId: string, otherUserId: string, projectId?: string) => {
+    const loadMessages = async (_myId: string, otherUserId: string, projectId?: string) => {
         try {
             setLoading(true);
             const params = new URLSearchParams({ withUserId: otherUserId });

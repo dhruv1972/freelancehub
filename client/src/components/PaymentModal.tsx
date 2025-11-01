@@ -31,7 +31,7 @@ const PaymentForm: React.FC<{
     freelancerName?: string;
     onSuccess: () => void;
     onError: (error: string) => void;
-}> = ({ amount, projectTitle, projectId, freelancerName, onSuccess, onError }) => {
+}> = ({ amount, projectTitle, projectId: _projectId, freelancerName, onSuccess, onError }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
